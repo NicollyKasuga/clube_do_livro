@@ -1,4 +1,3 @@
-from audioop import cross
 from flask import request, current_app, jsonify
 from app.models import Reader
 from sqlalchemy.exc import IntegrityError
@@ -21,9 +20,6 @@ def create_reader():
                 "email": new_reader.email,
             }
         )
-
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
 
         return response, 201
     except IntegrityError:
@@ -52,7 +48,16 @@ def get_reader():
     token = request.headers["Authorization"].split()[1]
     reader = decode_token(token)["sub"]
 
-    return jsonify({"name": reader["name"], "email": reader["email"]}), 200
+    return (
+        jsonify(
+            {
+                "reader_id": reader["reader_id"],
+                "name": reader["name"],
+                "email": reader["email"],
+            }
+        ),
+        200,
+    )
 
 
 @jwt_required()
