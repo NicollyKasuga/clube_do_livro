@@ -1,6 +1,8 @@
 alembic==1.7.5
 bidict==0.22.0
 black==21.9b0
+boto3==1.22.3
+botocore==1.25.3
 click==8.0.1
 environs==9.3.3
 Flask==2.0.1
@@ -12,6 +14,7 @@ Flask-SQLAlchemy==2.5.1
 greenlet==1.1.1
 itsdangerous==2.0.1
 Jinja2==3.0.1
+jmespath==1.0.0
 Mako==1.1.5
 MarkupSafe==2.0.1
 marshmallow==3.13.0
@@ -20,11 +23,15 @@ pathspec==0.9.0
 platformdirs==2.3.0
 psycopg2-binary==2.9.1
 PyJWT==2.3.0
+python-dateutil==2.8.2
 python-dotenv==0.19.0
 python-engineio==4.3.2
 python-socketio==5.6.0
 regex==2021.8.28
+s3transfer==0.5.2
+six==1.16.0
 SQLAlchemy==1.4.23
 tomli==1.2.1
 typing-extensions==3.10.0.2
+urllib3==1.26.9
 Werkzeug==2.0.1
