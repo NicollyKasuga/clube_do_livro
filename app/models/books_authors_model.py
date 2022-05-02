@@ -6,9 +6,8 @@ from app.configs.database import db
 
 class BookAuthor(db.Model):
 
+    __tablename__ = "books_authors"
 
-    __tablename__="books_authors"
-
-    books_authors_id = Column(UUID(as_uuid=True) , primary_key = True, default=uuid4)
-    author_id = Column(UUID, ForeignKey("authors.author_id"), nullable = False)
-    book_id = Column(UUID, ForeignKey("books.book_id"), nullable= False)
+    books_authors_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    author_id = Column(UUID, ForeignKey("authors.author_id"), nullable=False)
+    book_id = Column(UUID, ForeignKey("books.book_id"), nullable=False)

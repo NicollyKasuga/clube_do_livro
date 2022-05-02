@@ -15,6 +15,7 @@ class Reader(db.Model):
     name: str
     email: str
     avatar: str
+    password_hash: str
 
     __tablename__ = "readers"
 
