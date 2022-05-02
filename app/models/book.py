@@ -2,7 +2,9 @@ from app.configs.database import db
 from uuid import uuid4
 from dataclasses import dataclass
 from sqlalchemy import Column, String
+from sqlalchemy.orm import validates
 from sqlalchemy.dialects.postgresql import UUID
+
 
 @dataclass
 class Book(db.Model):
@@ -25,3 +27,8 @@ class Book(db.Model):
     publisher = Column(String(150))
     cover_img = Column(String)
 
+    @validates("ISBN")
+    def validate_ISB(self, key, val):
+        if len(val) != 13:
+            raise AttributeError
+        return val

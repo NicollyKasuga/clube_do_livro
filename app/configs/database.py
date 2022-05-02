@@ -13,3 +13,4 @@ def init_app(app: Flask):
 
     from app import models
     from app.models.user_model import UserModel
+    from app.models.book import Book
