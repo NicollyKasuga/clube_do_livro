@@ -49,3 +49,8 @@ def patch_book(isbn):
     current_app.db.session.add(book)
     current_app.db.session.commit()
     return jsonify(book),HTTPStatus.OK
+def get_book_by_isbn(isbn):
+    book = Book.query.filter_by(ISBN=isbn).first()
+    if not book:
+        return {"msg": "Livro não encontrado"}
+    return jsonify(book),HTTPStatus.OK
