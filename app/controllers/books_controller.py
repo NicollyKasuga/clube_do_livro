@@ -42,7 +42,8 @@ def get_book():
 def patch_book(isbn):
     data = request.get_json()
     book = Book.query.filter_by(ISBN=isbn).first()
-
+    if not book:
+        return {"msg": "Livro não encontrado"}
     for key, val in data.items():
         setattr(book, key, val)
     
