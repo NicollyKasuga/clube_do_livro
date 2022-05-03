@@ -34,11 +34,6 @@ def register_confirmed_reader(token):
 
     reader = decode_token(token)['sub']
 
-    found_reader = Reader.query.filter(Reader.email == reader["email"]).first()
-
-    if found_reader:
-        return jsonify({"msg": "Email already exists"}), 409
-
     new_reader = Reader(**reader)
 
     current_app.db.session.add(new_reader)
