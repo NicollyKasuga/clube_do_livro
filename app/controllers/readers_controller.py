@@ -16,7 +16,7 @@ def create_reader():
     if found_reader:
         return jsonify({"msg": "Email already exists"}), 409
     print(found_reader)
-    
+
     new_reader = Reader(**reader_data)
 
     token = create_access_token(new_reader)
@@ -28,13 +28,16 @@ def create_reader():
     return {"msg": "Confirmation email sent",
             "token": token}, 200
 
-def register_confirmed_reader():
-    data = request.get_json()
-        
-    token = data['token']
+def register_confirmed_reader(token):
+
     print(token)
 
     reader = decode_token(token)['sub']
+
+    found_reader = Reader.query.filter(Reader.email == reader["email"]).first()
+
+    if found_reader:
+        return jsonify({"msg": "Email already exists"}), 409
 
     new_reader = Reader(**reader)
 
