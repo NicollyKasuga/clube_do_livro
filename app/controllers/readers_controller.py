@@ -1,5 +1,5 @@
 from flask import request, current_app, jsonify
-from regex import E
+from regex import E, R
 from requests import session
 from app.models import Reader
 from sqlalchemy.exc import IntegrityError
@@ -33,6 +33,11 @@ def register_confirmed_reader(token):
     print(token)
 
     reader = decode_token(token)['sub']
+
+    found_reader = Reader.query.filter(Reader.email == reader["email"]).first()
+
+    if found_reader:
+        return jsonify({"msg": "Email already exists"}), 409
 
     new_reader = Reader(**reader)
 
