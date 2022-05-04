@@ -1,9 +1,14 @@
+from dataclasses import asdict
 from flask import request, current_app, jsonify
 from regex import E, R
 from requests import session
 from app.models import Reader
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token, jwt_required, decode_token
+from sqlalchemy.orm import Session
+from app.configs.database import db
+from app.models import Reader
+from datetime import timedelta
 from app.models.email_model import Email
 
 
@@ -58,7 +63,7 @@ def signin():
         return jsonify({"msg": "email not registered"}), 404
 
     if found_reader.check_password(reader_data["password"]):
-        token = create_access_token(found_reader)
+        token = create_access_token(found_reader, expires_delta=timedelta(hours=24))
         return jsonify({"access_token": token}), 200
 
     return jsonify({"msg": "reader not found"}), 404
@@ -80,6 +85,14 @@ def get_reader():
         ),
         200,
     )
+
+
+@jwt_required()
+def get_all_readers():
+    session: Session = db.session
+    readers = session.query(Reader).all()
+
+    return jsonify(readers), 200
 
 
 @jwt_required()
