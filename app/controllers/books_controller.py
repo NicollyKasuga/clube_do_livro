@@ -9,6 +9,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.services.books_services import define_authors_or_genres
 from app.configs.database import db
+from werkzeug.exceptions import NotFound
+from sqlalchemy.exc import DataError
+from psycopg2.errors import InvalidTextRepresentation
 
 
 def create_book():
@@ -103,6 +106,46 @@ def create_review():
                 "reader_id": new_review.reader_id,
                 "review": new_review.review,
                 "rating": str(new_review.rating),
+            }
+        ),
+        HTTPStatus.OK,
+    )
+
+
+def update_review(review_id: str):
+    session: Session = db.session
+    data: dict = request.get_json()
+
+    try:
+        found_review = (
+            session.query(Review).filter_by(review_id=review_id).first_or_404()
+        )
+    except NotFound:
+        return {"msg": "Review not found"}, HTTPStatus.NOT_FOUND
+    except DataError as e:
+        if type(e.orig) == InvalidTextRepresentation:
+            return {"msg": "Review id is not in uuid4 format"}, HTTPStatus.BAD_REQUEST
+
+    reader_id = data.pop("reader_id")
+
+    reader_is_review_owner = found_review.reader_id == reader_id
+
+    if not reader_is_review_owner:
+        return {
+            "msg": "This reader is not owner of the review"
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
+
+    for key, value in data.items():
+        setattr(found_review, key, value)
+
+    session.commit()
+
+    return (
+        jsonify(
+            {
+                "review_id": found_review.review_id,
+                "review": found_review.review,
+                "rating": str(found_review.rating),
             }
         ),
         HTTPStatus.OK,
