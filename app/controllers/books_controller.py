@@ -1,6 +1,7 @@
 from hashlib import new
 from http import HTTPStatus
 from http.client import OK
+from operator import and_
 from flask import current_app, jsonify, request
 import psycopg2
 from app.models import Author, Book, Review
@@ -73,6 +74,21 @@ def get_book_by_isbn(isbn):
 def create_review():
     session: Session = db.session
     data = request.get_json()
+
+    review_already_exists = (
+        session.query(Review)
+        .filter(
+            and_(
+                Review.book_id == data["book_id"], Review.reader_id == data["reader_id"]
+            )
+        )
+        .first()
+    )
+
+    if review_already_exists:
+        return {
+            "msg": "Reader already have a review for this book"
+        }, HTTPStatus.CONFLICT
 
     new_review = Review(**data)
 
