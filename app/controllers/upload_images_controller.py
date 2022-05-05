@@ -10,15 +10,13 @@ client_s3 = boto3.client(
     aws_secret_access_key=os.getenv("ACCESS_SECRET")
 )
     
-# @app.post("/upload")
 def upload_images():
     file = request.files.get('file')
-    
-    if file is not None:
-        print(type(file.filename))        
+    bucket = os.getenv("BUCKET_NAME")
+    if file is not None:        
         file_upload = os.path.join('/tmp/',file.filename)
         file.save(file_upload)
-        response = client_s3.upload_file(file_upload, os.getenv("BUCKET_NAME"), file.filename)
+        response = client_s3.upload_file(file_upload, bucket, file.filename)
         print(response)
 
-    return "upload realizado com sucesso"
+    return f"https://{bucket}.s3.us-east-1.amazonaws.com/{file.filename}"
