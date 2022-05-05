@@ -96,28 +96,6 @@ def get_reviews_by_book(book_id: str):
     )
 
 
-def get_reviews_by_reader(reader_id: str):
-    session: Session = db.session
-
-    book_reviews = session.query(Review).filter_by(reader_id=reader_id).all()
-
-    return (
-        jsonify(
-            [
-                {
-                    "review_id": review.review_id,
-                    "book_id": review.book_id,
-                    "reader_id": review.reader_id,
-                    "review": review.review,
-                    "rating": str(review.rating),
-                }
-                for review in book_reviews
-            ]
-        ),
-        HTTPStatus.OK,
-    )
-
-
 def create_review():
     session: Session = db.session
     data = request.get_json()
