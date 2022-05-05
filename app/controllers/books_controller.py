@@ -3,7 +3,7 @@ from http import HTTPStatus
 from http.client import OK
 from flask import current_app, jsonify, request
 import psycopg2
-from app.models import Author, Book
+from app.models import Author, Book, Review
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.services.books_services import define_authors_or_genres
@@ -14,24 +14,12 @@ def create_book():
     session: Session = db.session
     data = request.get_json()
 
-    authors = data.pop("authors")
-
     try:
         new_book = Book(**data)
     except AttributeError:
         return {"msg": "Invalid ISBN"}, HTTPStatus.BAD_REQUEST
     except TypeError:
         return {"msg": "Wrong fields added"}, HTTPStatus.BAD_REQUEST
-
-    authors = define_authors_or_genres(
-        authors_or_genres=authors, Model=Author, session=session
-    )
-
-    print(new_book)
-    print(authors)
-
-    for author in authors:
-        new_book.authors.append(author)
 
     try:
         session.add(new_book)
@@ -80,3 +68,26 @@ def get_book_by_isbn(isbn):
     if not book:
         return {"msg": "Livro não encontrado"}
     return jsonify(book), HTTPStatus.OK
+
+
+def create_review():
+    session: Session = db.session
+    data = request.get_json()
+
+    new_review = Review(**data)
+
+    session.add(new_review)
+    session.commit()
+
+    return (
+        jsonify(
+            {
+                "review_id": new_review.review_id,
+                "book_id": new_review.book_id,
+                "reader_id": new_review.reader_id,
+                "review": new_review.review,
+                "rating": str(new_review.rating),
+            }
+        ),
+        HTTPStatus.OK,
+    )

@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 @dataclass
 class Book(db.Model):
 
+    book_id: str
     title: str
     synopsis: str
     edition: str
