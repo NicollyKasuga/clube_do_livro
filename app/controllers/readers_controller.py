@@ -1,29 +1,55 @@
+from dataclasses import asdict
 from flask import request, current_app, jsonify
+from regex import E
+from requests import session
 from app.models import Reader
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token, jwt_required, decode_token
+from sqlalchemy.orm import Session
+from app.configs.database import db
+from app.models import Reader
+from datetime import timedelta
+from app.models.email_model import Email
 
 
 def create_reader():
-    try:
-        reader_data = request.get_json()
+        
+    reader_data = request.get_json()
 
-        new_reader = Reader(**reader_data)
+    found_reader = Reader.query.filter(Reader.email == reader_data["email"]).first()
 
-        current_app.db.session.add(new_reader)
-        current_app.db.session.commit()
-
-        response = jsonify(
-            {
-                "id": new_reader.reader_id,
-                "name": new_reader.name,
-                "email": new_reader.email,
-            }
-        )
-
-        return response, 201
-    except IntegrityError:
+    if found_reader:
         return jsonify({"msg": "Email already exists"}), 409
+    print(found_reader)
+
+    new_reader = Reader(**reader_data)
+
+    token = create_access_token(new_reader)
+
+    send_user_email = Email(new_reader.email, token)
+
+    send_user_email.send_email()
+
+    return {"msg": "Confirmation email sent",
+            "token": token}, 200
+
+def register_confirmed_reader(token):
+
+    print(token)
+
+    reader = decode_token(token)['sub']
+
+    found_reader = Reader.query.filter(Reader.email == reader["email"]).first()
+
+    if found_reader:
+        return jsonify({"msg": "Email already exists"}), 409
+
+    new_reader = Reader(**reader)
+
+    current_app.db.session.add(new_reader)
+    current_app.db.session.commit()
+
+    return jsonify(new_reader), 201
 
 
 def signin():
@@ -37,7 +63,7 @@ def signin():
         return jsonify({"msg": "email not registered"}), 404
 
     if found_reader.check_password(reader_data["password"]):
-        token = create_access_token(found_reader)
+        token = create_access_token(found_reader, expires_delta=timedelta(hours=24))
         return jsonify({"access_token": token}), 200
 
     return jsonify({"msg": "reader not found"}), 404
@@ -47,6 +73,7 @@ def signin():
 def get_reader():
     token = request.headers["Authorization"].split()[1]
     reader = decode_token(token)["sub"]
+    print(reader)
 
     return (
         jsonify(
@@ -58,6 +85,14 @@ def get_reader():
         ),
         200,
     )
+
+
+@jwt_required()
+def get_all_readers():
+    session: Session = db.session
+    readers = session.query(Reader).all()
+
+    return jsonify(readers), 200
 
 
 @jwt_required()

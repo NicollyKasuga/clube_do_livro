@@ -4,12 +4,13 @@ from sqlalchemy import Column, ForeignKey, String, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from app.configs.database import db
 
+
 @dataclass
 class ReaderBook(db.Model):
 
     review: str
     rating: float
-    
+
     __tablename__ = "reviews"
 
     reader_book_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)

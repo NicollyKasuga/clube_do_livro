@@ -16,10 +16,9 @@ class Book(db.Model):
     publisher: str
     cover_img: str
 
-
     __tablename__ = "books"
 
-    book_id = Column(UUID(as_uuid=True), primary_key = True, default=uuid4)
+    book_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     title = Column(String(200), nullable=False)
     synopsis = Column(String)
     edition = Column(String(50))

@@ -12,5 +12,3 @@ def init_app(app: Flask):
     app.db = db
 
     from app import models
-    from app.models.user_model import UserModel
-    from app.models.book import Book
