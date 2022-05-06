@@ -28,6 +28,7 @@ class Book(db.Model):
     cover_img = Column(String)
 
     authors = relationship("Author", secondary="books_authors", backref="books")
+    genres = relationship("Genre", secondary="books_genres", backref="books")
 
     reviews = relationship(
         "Review", backref=backref("book", uselist=False), uselist=True

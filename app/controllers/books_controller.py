@@ -2,7 +2,7 @@ from http import HTTPStatus
 from operator import and_
 from flask import current_app, jsonify, request, url_for
 import psycopg2
-from app.models import Author, Book, Review
+from app.models import Author, Book, Review, Genre
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import Session
 from app.configs.database import db
@@ -17,8 +17,16 @@ def create_book():
     session: Session = db.session
     data = request.get_json()
 
-    authors = data.pop("authors")
-    authors = define_authors_or_genres(authors, session, Author)
+    authors = []
+    genres = []
+
+    if data.get("authors"):
+        authors = data.pop("authors")
+        authors = define_authors_or_genres(authors, session, Author)
+
+    if data.get("genres"):
+        genres = data.pop("genres")
+        genres = define_authors_or_genres(genres, session, Genre)
 
     try:
         new_book = Book(**data)
@@ -27,8 +35,13 @@ def create_book():
     except TypeError:
         return {"msg": "Wrong fields added"}, HTTPStatus.BAD_REQUEST
 
-    for author in authors:
-        new_book.authors.append(author)
+    if authors:
+        for author in authors:
+            new_book.authors.append(author)
+
+    if genres:
+        for genre in genres:
+            new_book.genres.append(genre)
 
     try:
         session.add(new_book)
@@ -38,7 +51,23 @@ def create_book():
             return {"msg": "ISBN already registred"}, HTTPStatus.CONFLICT
         else:
             return {"msg": "Missing fields"}, HTTPStatus.BAD_REQUEST
-    return jsonify(new_book), HTTPStatus.CREATED
+    return (
+        jsonify(
+            {
+                "book_id": new_book.book_id,
+                "title": new_book.title,
+                "synopsis": new_book.synopsis,
+                "edition": new_book.edition,
+                "ISBN": new_book.ISBN,
+                "publisher": new_book.publisher,
+                "cover_img": new_book.cover_img,
+                "reviews": url_for(".get_reviews_by_book", isbn=new_book.ISBN),
+                "authors": [author.name for author in new_book.authors],
+                "genres": [genre.name for genre in new_book.genres],
+            }
+        ),
+        HTTPStatus.CREATED,
+    )
 
 
 def get_book():
@@ -55,6 +84,7 @@ def get_book():
             "cover_img": book.cover_img,
             "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
             "authors": [author.name for author in book.authors],
+            "genres": [genre.name for genre in book.genres],
         }
         for book in books
     ]
@@ -67,16 +97,30 @@ def patch_book(isbn):
     data = request.get_json()
     book = Book.query.filter_by(ISBN=isbn).first()
 
-    authors = data.pop("authors")
-    authors = define_authors_or_genres(authors, session, Author)
+    authors = []
+    genres = []
+
+    if data.get("authors"):
+        authors = data.pop("authors")
+        authors = define_authors_or_genres(authors, session, Author)
+
+    if data.get("genres"):
+        genres = data.pop("genres")
+        genres = define_authors_or_genres(genres, session, Genre)
 
     if not book:
         return {"msg": "Livro não encontrado"}
+
     for key, val in data.items():
         setattr(book, key, val)
 
-    for author in authors:
-        book.authors.append(author)
+    if authors:
+        for author in authors:
+            book.authors.append(author)
+
+    if genres:
+        for genre in genres:
+            book.genres.append(genre)
 
     current_app.db.session.add(book)
     current_app.db.session.commit()
@@ -92,6 +136,7 @@ def patch_book(isbn):
                 "cover_img": book.cover_img,
                 "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
                 "authors": [author.name for author in book.authors],
+                "genres": [genre.name for genre in book.genres],
             }
         ),
         HTTPStatus.OK,
@@ -114,6 +159,8 @@ def get_book_by_isbn(isbn):
                 "publisher": book.publisher,
                 "cover_img": book.cover_img,
                 "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
+                "authors": [author.name for author in book.authors],
+                "genres": [genre.name for genre in book.genres],
             }
         ),
         HTTPStatus.OK,
