@@ -22,7 +22,6 @@ def create_reader():
 
     if found_reader:
         return jsonify({"msg": "Email already exists"}), 409
-    print(found_reader)
 
     new_reader = Reader(**reader_data)
 
@@ -37,7 +36,6 @@ def create_reader():
 
 def register_confirmed_reader(token):
 
-    print(token)
 
     reader = decode_token(token)["sub"]
 
@@ -59,7 +57,6 @@ def signin():
 
     found_reader = Reader.query.filter(Reader.email == reader_data["email"]).first()
 
-    print(found_reader)
 
     if not found_reader:
         return jsonify({"msg": "email not registered"}), 404
@@ -75,7 +72,6 @@ def signin():
 def get_reader():
     token = request.headers["Authorization"].split()[1]
     reader = decode_token(token)["sub"]
-    print(reader)
 
     return (
         jsonify(
