@@ -1,33 +1,30 @@
 from app.configs.database import db
-from uuid import uuid4
+
+from sqlalchemy import Column, Integer, String
 from dataclasses import dataclass
 
-# from typing import uuid4 as UUID4
-from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 @dataclass
-class Reader(db.Model):
-
-    reader_id: str
+class UserModel(db.Model):
+    id: int
     name: str
     email: str
     avatar: str
     password_hash: str
 
-    __tablename__ = "readers"
+    __tablename__ = "users"
 
-    reader_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(50), nullable=False)
-    email = Column(String(70), nullable=False, unique=True)
-    avatar = Column(String)
-    password_hash = Column(String)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(150), nullable=False)
+    email = Column(String(200), nullable=False, unique=True)
+    avatar = Column(String(511))
+    password_hash = Column(String(511))
 
     @property
     def password(self):
-        raise AttributeError("Password cannot be accessed")
+        raise AttributeError("Password cannot be acessed")
 
     @password.setter
     def password(self, password_to_hash):
