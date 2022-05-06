@@ -2,15 +2,14 @@ from hashlib import new
 from http import HTTPStatus
 from http.client import OK
 from operator import and_
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, request, url_for
 import psycopg2
 from app.models import Author, Book, Review
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import Session
 from app.services.books_services import define_authors_or_genres
 from app.configs.database import db
 from werkzeug.exceptions import NotFound
-from sqlalchemy.exc import DataError
 from psycopg2.errors import InvalidTextRepresentation
 
 
@@ -48,6 +47,7 @@ def get_book():
             "ISBN": book.ISBN,
             "publisher": book.publisher,
             "cover_img": book.cover_img,
+            "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
         }
         for book in books
     ]
@@ -57,6 +57,7 @@ def get_book():
 def patch_book(isbn):
     data = request.get_json()
     book = Book.query.filter_by(ISBN=isbn).first()
+    print(book.__dict__)
     if not book:
         return {"msg": "Livro não encontrado"}
     for key, val in data.items():
@@ -71,13 +72,28 @@ def get_book_by_isbn(isbn):
     book = Book.query.filter_by(ISBN=isbn).first()
     if not book:
         return {"msg": "Livro não encontrado"}
-    return jsonify(book), HTTPStatus.OK
+
+    return (
+        jsonify(
+            {
+                "book_id": book.book_id,
+                "title": book.title,
+                "synopsis": book.synopsis,
+                "edition": book.edition,
+                "ISBN": book.ISBN,
+                "publisher": book.publisher,
+                "cover_img": book.cover_img,
+                "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
+            }
+        ),
+        HTTPStatus.OK,
+    )
 
 
-def get_reviews_by_book(book_id: str):
+def get_reviews_by_book(isbn: str):
     session: Session = db.session
 
-    book_reviews = session.query(Review).filter_by(book_id=book_id).all()
+    book = session.query(Book).filter_by(ISBN=isbn).first()
 
     return (
         jsonify(
@@ -89,7 +105,7 @@ def get_reviews_by_book(book_id: str):
                     "review": review.review,
                     "rating": str(review.rating),
                 }
-                for review in book_reviews
+                for review in book.reviews
             ]
         ),
         HTTPStatus.OK,

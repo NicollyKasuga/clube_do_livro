@@ -2,7 +2,7 @@ from app.configs.database import db
 from uuid import uuid4
 from dataclasses import dataclass
 from sqlalchemy import Column, String
-from sqlalchemy.orm import validates, relationship
+from sqlalchemy.orm import validates, relationship, backref
 from sqlalchemy.dialects.postgresql import UUID
 
 
@@ -28,7 +28,10 @@ class Book(db.Model):
     cover_img = Column(String)
 
     authors = relationship("Author", secondary="books_authors", backref="books")
-    # categories = relationship("Category", secondary="tasks_categories", backref="tasks")
+
+    reviews = relationship(
+        "Review", backref=backref("book", uselist=False), uselist=True
+    )
 
     @validates("ISBN")
     def validate_ISB(self, key, val):
