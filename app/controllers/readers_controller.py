@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from http import HTTPStatus
 from flask import request, current_app, jsonify
 from regex import E, R
 from requests import session
@@ -10,10 +11,11 @@ from app.configs.database import db
 from app.models import Reader
 from datetime import timedelta
 from app.models.email_model import Email
+from app.models import Review
 
 
 def create_reader():
-        
+
     reader_data = request.get_json()
 
     found_reader = Reader.query.filter(Reader.email == reader_data["email"]).first()
@@ -30,14 +32,14 @@ def create_reader():
 
     send_user_email.send_email()
 
-    return {"msg": "Confirmation email sent",
-            "token": token}, 200
+    return {"msg": "Confirmation email sent", "token": token}, 200
+
 
 def register_confirmed_reader(token):
 
     print(token)
 
-    reader = decode_token(token)['sub']
+    reader = decode_token(token)["sub"]
 
     found_reader = Reader.query.filter(Reader.email == reader["email"]).first()
 
@@ -122,3 +124,28 @@ def delete_reader():
     current_app.db.session.commit()
 
     return jsonify({"msg": f"Reader {reader.name} has been deleted"}), 200
+
+
+def get_reviews_by_reader():
+    session: Session = db.session
+
+    token = request.headers["Authorization"].split()[1]
+    reader_id = decode_token(token)["sub"]["reader_id"]
+
+    book_reviews = session.query(Review).filter_by(reader_id=reader_id).all()
+
+    return (
+        jsonify(
+            [
+                {
+                    "review_id": review.review_id,
+                    "book_id": review.book_id,
+                    "reader_id": review.reader_id,
+                    "review": review.review,
+                    "rating": str(review.rating),
+                }
+                for review in book_reviews
+            ]
+        ),
+        HTTPStatus.OK,
+    )
