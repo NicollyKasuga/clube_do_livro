@@ -9,6 +9,7 @@ from app.configs.database import db
 from werkzeug.exceptions import NotFound
 from psycopg2.errors import InvalidTextRepresentation
 from flask_jwt_extended import jwt_required
+from app.services.books_services import define_authors_or_genres
 
 
 @jwt_required()
@@ -16,12 +17,18 @@ def create_book():
     session: Session = db.session
     data = request.get_json()
 
+    authors = data.pop("authors")
+    authors = define_authors_or_genres(authors, session, Author)
+
     try:
         new_book = Book(**data)
     except AttributeError:
         return {"msg": "Invalid ISBN"}, HTTPStatus.BAD_REQUEST
     except TypeError:
         return {"msg": "Wrong fields added"}, HTTPStatus.BAD_REQUEST
+
+    for author in authors:
+        new_book.authors.append(author)
 
     try:
         session.add(new_book)
@@ -47,6 +54,7 @@ def get_book():
             "publisher": book.publisher,
             "cover_img": book.cover_img,
             "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
+            "authors": [author.name for author in book.authors],
         }
         for book in books
     ]
@@ -55,13 +63,20 @@ def get_book():
 
 @jwt_required()
 def patch_book(isbn):
+    session: Session = db.session
     data = request.get_json()
     book = Book.query.filter_by(ISBN=isbn).first()
-    print(book.__dict__)
+
+    authors = data.pop("authors")
+    authors = define_authors_or_genres(authors, session, Author)
+
     if not book:
         return {"msg": "Livro não encontrado"}
     for key, val in data.items():
         setattr(book, key, val)
+
+    for author in authors:
+        book.authors.append(author)
 
     current_app.db.session.add(book)
     current_app.db.session.commit()
@@ -76,6 +91,7 @@ def patch_book(isbn):
                 "publisher": book.publisher,
                 "cover_img": book.cover_img,
                 "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
+                "authors": [author.name for author in book.authors],
             }
         ),
         HTTPStatus.OK,
