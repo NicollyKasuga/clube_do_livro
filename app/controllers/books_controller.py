@@ -1,18 +1,17 @@
-from hashlib import new
 from http import HTTPStatus
-from http.client import OK
 from operator import and_
 from flask import current_app, jsonify, request, url_for
 import psycopg2
 from app.models import Author, Book, Review
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import Session
-from app.services.books_services import define_authors_or_genres
 from app.configs.database import db
 from werkzeug.exceptions import NotFound
 from psycopg2.errors import InvalidTextRepresentation
+from flask_jwt_extended import jwt_required
 
 
+@jwt_required()
 def create_book():
     session: Session = db.session
     data = request.get_json()
@@ -54,6 +53,7 @@ def get_book():
     return {"data": serializer}, HTTPStatus.OK
 
 
+@jwt_required()
 def patch_book(isbn):
     data = request.get_json()
     book = Book.query.filter_by(ISBN=isbn).first()
@@ -65,7 +65,21 @@ def patch_book(isbn):
 
     current_app.db.session.add(book)
     current_app.db.session.commit()
-    return jsonify(book), HTTPStatus.OK
+    return (
+        jsonify(
+            {
+                "book_id": book.book_id,
+                "title": book.title,
+                "synopsis": book.synopsis,
+                "edition": book.edition,
+                "ISBN": book.ISBN,
+                "publisher": book.publisher,
+                "cover_img": book.cover_img,
+                "reviews": url_for(".get_reviews_by_book", isbn=book.ISBN),
+            }
+        ),
+        HTTPStatus.OK,
+    )
 
 
 def get_book_by_isbn(isbn):
@@ -112,6 +126,7 @@ def get_reviews_by_book(isbn: str):
     )
 
 
+@jwt_required()
 def create_review():
     session: Session = db.session
     data = request.get_json()
@@ -150,6 +165,7 @@ def create_review():
     )
 
 
+@jwt_required()
 def update_review(review_id: str):
     session: Session = db.session
     data: dict = request.get_json()
