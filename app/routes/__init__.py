@@ -15,5 +15,5 @@ def init_app(app: Flask):
     bp_api.register_blueprint(bp_readers)
     bp_api.register_blueprint(bp_chat)
     bp_api.register_blueprint(bp_books)
+    bp_api.register_blueprint(bp_upload_images)
     app.register_blueprint(bp_api)
-    app.register_blueprint(bp_upload_images)
