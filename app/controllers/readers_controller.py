@@ -126,8 +126,11 @@ def delete_reader():
     return jsonify({"msg": f"Reader {reader.name} has been deleted"}), 200
 
 
-def get_reviews_by_reader(reader_id: str):
+def get_reviews_by_reader():
     session: Session = db.session
+
+    token = request.headers["Authorization"].split()[1]
+    reader_id = decode_token(token)["sub"]["reader_id"]
 
     book_reviews = session.query(Review).filter_by(reader_id=reader_id).all()
 

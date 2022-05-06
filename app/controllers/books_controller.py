@@ -10,6 +10,7 @@ from werkzeug.exceptions import NotFound
 from psycopg2.errors import InvalidTextRepresentation
 from flask_jwt_extended import jwt_required
 from app.services.books_services import define_authors_or_genres
+from flask_jwt_extended import decode_token
 
 
 @jwt_required()
@@ -194,13 +195,12 @@ def create_review():
     session: Session = db.session
     data = request.get_json()
 
+    token = request.headers["Authorization"].split()[1]
+    reader_id = decode_token(token)["sub"]["reader_id"]
+
     review_already_exists = (
         session.query(Review)
-        .filter(
-            and_(
-                Review.book_id == data["book_id"], Review.reader_id == data["reader_id"]
-            )
-        )
+        .filter(and_(Review.book_id == data["book_id"], Review.reader_id == reader_id))
         .first()
     )
 
@@ -208,6 +208,8 @@ def create_review():
         return {
             "msg": "Reader already have a review for this book"
         }, HTTPStatus.CONFLICT
+
+    data["reader_id"] = reader_id
 
     new_review = Review(**data)
 
@@ -233,6 +235,9 @@ def update_review(review_id: str):
     session: Session = db.session
     data: dict = request.get_json()
 
+    token = request.headers["Authorization"].split()[1]
+    reader_id = decode_token(token)["sub"]["reader_id"]
+
     try:
         found_review = (
             session.query(Review).filter_by(review_id=review_id).first_or_404()
@@ -242,8 +247,6 @@ def update_review(review_id: str):
     except DataError as e:
         if type(e.orig) == InvalidTextRepresentation:
             return {"msg": "Review id is not in uuid4 format"}, HTTPStatus.BAD_REQUEST
-
-    reader_id = data.pop("reader_id")
 
     reader_is_review_owner = found_review.reader_id == reader_id
 
