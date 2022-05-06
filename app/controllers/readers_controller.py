@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from http import HTTPStatus
 from flask import request, current_app, jsonify
-from regex import E
+from regex import E, R
 from requests import session
 from app.models import Reader
 from sqlalchemy.exc import IntegrityError
