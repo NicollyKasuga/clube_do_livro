@@ -12,6 +12,7 @@ client_s3 = boto3.client(
     
 def upload_images():
     file = request.files.get('file')
+    print(file)
     bucket = os.getenv("BUCKET_NAME")
     if file is not None:        
         file_upload = os.path.join('/tmp/',file.filename)
